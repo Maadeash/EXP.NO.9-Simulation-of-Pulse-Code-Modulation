@@ -1,76 +1,146 @@
 # EXP.NO.9-Simulation-of-Pulse-Code-Modulation
 9.Simulation of PCM
 
-# AIM
-The aim of Pulse Code Modulation (PCM) is to convert an analog signal into a digital form by sampling, quantizing, and encoding it into binary format. This process ensures accurate transmission and storage of signals in digital systems. PCM enhances signal quality and error detection, making it crucial in audio, telecommunications, and multimedia applications.
+# AIM:
+To implement Pulse Code Modulation (PCM) using Python for a sinusoidal signal, including sampling, quantization, and encoding into binary form.
 
-# SOFTWARE REQUIRED
+# SOFTWARE REQUIRED:
+Google colab 
 
-google colab
+# ALGORITHMS:
+# Sampling
 
-# ALGORITHMS
-Generate an analog signal (e.g., a sine wave).
-Define a sampling rate and generate sampled data points.
-Choose a number of quantization levels and perform quantization on the sampled data.
-Convert the quantized levels to binary representations (this is the encoding step).
-(Optional for visualization) Simulate a basic reconstruction by plotting the quantized levels as a step function.
+1.The analog signal is sampled at regular intervals (usually according to the Nyquist rate, i.e., at least twice the maximum frequency in the signal).
 
-# PROGRAM
-import matplotlib.pyplot as plt
+2.This converts a continuous signal into a discrete-time signal.
+
+# Quantization
+
+1.Each sampled value is rounded off to the nearest value within a fixed set of levels.
+
+2.This step introduces a small error known as quantization noise.
+
+# Encoding
+
+1.Each quantized value is then converted into a binary code.
+
+2.The number of bits used depends on the desired resolution (e.g., 8-bit, 16-bit, 24-bit PCM).
+
+# PROGRAM:
+```
 import numpy as np
 
-sampling_rate = 5000
-frequency = 50
+# Parameters
+sampling_rate = 8000
 duration = 0.1
 quantization_levels = 16
 
+# Time base
 t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
 
-message_signal = np.sin(2 * np.pi * frequency * t)
+# Two message signals
+frequency1 = 80
+frequency2 = 160
+message_signal1 = np.sin(2 * np.pi * frequency1 * t)
+message_signal2 = np.sin(2 * np.pi * frequency2 * t)
 
+# Quantization function
+def quantize(signal, levels):
+    step = (max(signal) - min(signal)) / levels
+    quantized = np.round(signal / step) * step
+    pcm = ((quantized - min(quantized)) / step).astype(int)
+    return quantized, pcm
+
+# Quantize both signals
+quantized_signal1, pcm_signal1 = quantize(message_signal1, quantization_levels)
+quantized_signal2, pcm_signal2 = quantize(message_signal2, quantization_levels)
+
+# Multiplexing the PCM signals by interleaving
+multiplexed_pcm = np.empty((pcm_signal1.size + pcm_signal2.size,), dtype=int)
+multiplexed_pcm[0::2] = pcm_signal1
+multiplexed_pcm[1::2] = pcm_signal2
+
+# Time base for multiplexed signal
+t_mux = np.linspace(0, duration, multiplexed_pcm.size, endpoint=False)
+
+# Clock signal for reference
 clock_signal = np.sign(np.sin(2 * np.pi * 200 * t))
 
-quantization_step = (max(message_signal) - min(message_signal)) / quantization_levels
-quantized_signal = np.round(message_signal / quantization_step) * quantization_step
+# Plotting
+plt.figure(figsize=(14, 12))
 
-pcm_signal = (quantized_signal - min(quantized_signal)) / quantization_step
-pcm_signal = pcm_signal.astype(int)
-
-plt.figure(figsize=(12, 10))
-
-plt.subplot(4, 1, 1)
-plt.plot(t, message_signal, label="Message Signal (Analog)", color='blue')
-plt.title("Message Signal (Analog)")
+plt.subplot(8, 1, 1)
+plt.plot(t, message_signal1, label="Message Signal 1 (50Hz)", color='blue')
+plt.title("Original Message Signal 1")
 plt.xlabel("Time [s]")
 plt.ylabel("Amplitude")
 plt.grid(True)
+plt.legend()
 
-plt.subplot(4, 1, 2)
-plt.plot(t, clock_signal, label="Clock Signal (Increased Frequency)", color='green')
-plt.title("Clock Signal (Increased Frequency)")
+plt.subplot(8, 1, 2)
+plt.plot(t, clock_signal, label="Clock Signal", color='green')
+plt.title("Clock Signal")
 plt.xlabel("Time [s]")
 plt.ylabel("Amplitude")
 plt.grid(True)
+plt.legend()
 
-plt.subplot(4, 1, 3)
-plt.step(t, quantized_signal, label="PCM Modulated Signal", color='red')
-plt.title("PCM Modulated Signal (Quantized)")
+plt.subplot(8, 1, 3)
+plt.step(t, quantized_signal1, label="Quantized Signal 1", color='red')
+plt.title("Quantized Signal 1")
 plt.xlabel("Time [s]")
 plt.ylabel("Amplitude")
 plt.grid(True)
+plt.legend()
 
-plt.subplot(4, 1, 4)
-plt.plot(t, quantized_signal, label="Signal Demodulation", color='purple', linestyle='--')
-plt.title("Signal Without Demodulation")
+plt.subplot(8, 1, 4)
+plt.plot(t, message_signal2, label="Message Signal 2 (120Hz)", color='orange', alpha=0.7)
+plt.title("Original Message Signal 2")
 plt.xlabel("Time [s]")
 plt.ylabel("Amplitude")
 plt.grid(True)
+plt.legend()
+
+plt.subplot(8, 1, 5)
+plt.plot(t, clock_signal, label="Clock Signal", color='green')
+plt.title("Clock Signal")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid(True)
+plt.legend()
+
+plt.subplot(8, 1, 6)
+plt.step(t, quantized_signal2, label="Quantized Signal 2", color='purple', alpha=0.7)
+plt.title("Quantized Signal 2")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid(True)
+plt.legend()
+
+plt.subplot(8, 1, 7)
+plt.step(t, quantized_signal1, label="Quantized Signal 1", color='red')
+plt.step(t, quantized_signal2, label="Quantized Signal 2", color='purple', alpha=0.7)
+plt.title("Overlay of Quantized Signals")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.grid(True)
+plt.legend()
+
+plt.subplot(8, 1, 8)
+plt.step(t_mux, multiplexed_pcm, label="Multiplexed PCM Signal", color='black')
+plt.title("Multiplexed PCM Signal (Interleaved)")
+plt.xlabel("Time [s]")
+plt.ylabel("PCM Value")
+plt.grid(True)
+plt.legend()
 
 plt.tight_layout()
 plt.show()
+```
 
-# OUTPUT
- ![image](https://github.com/user-attachments/assets/8b3a4a23-c9e7-4e47-9375-b7af288595e9)
+# OUTPUT:
+![image](https://github.com/user-attachments/assets/eef0c2a5-625f-4a5f-bb9e-07bf5ff66b3f)
 
-# RESULT / CONCLUSIONS
-Pulse Code Modulation (PCM) converts analog signals into digital form by sampling and quantizing the signal. The result is a series of pulses that represent the digitized version of the original signal, widely used in audio and telecommunications.
+ 
+# RESULT / CONCLUSIONS:
+Thus the pulse code modulation converts an analog sine wave into a digital signal and the graph is obtained.
